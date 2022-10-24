@@ -1,0 +1,68 @@
+\documentclass[a4paper]{article}
+
+\usepackage[a4paper,margin=3cm, footskip=0.25in]{geometry}
+\usepackage[nottoc,numbib]{tocbibind}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{adjustbox}
+\usepackage{varwidth}
+
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{listings}
+
+\author{Bram Pulles -- S1015194}
+\title{\textbf{Symbolic AI's for\\ Generalised Connect Four}}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\pagebreak
+\section{Introduction}
+
+\section{Heuristics}
+
+\section{Algorithm}
+
+\section{Complexity}
+
+\section{Benchmarks}
+\begin{table}[h]
+	\begin{adjustbox}{center}
+	\begin{tabular}{|c|c|c|c|c|c|c|c|c|}\hline
+		\textbf{heuristic field} & \textbf{heuristic value} & \textbf{total} & \textbf{timeouts} & \textbf{mean time} & \textbf{max time} & \textbf{mean count} & \textbf{max count} & \textbf{count per sec} \\\hline
+		nop & nop & 5 & 0 & 0.015856 & 0.246063 & 0 & 1732 & 5861 \\\hline
+		nop & lcv & 5 & 0 & 0.0158 & 0.762563 & 0 & 5480 & 6750 \\\hline
+		nop & mcv & 5 & 0 & 0.015925 & 0.077206 & 0 & 491 & 3891 \\\hline
+		lf & nop & 5 & 2 & 0.016154 & 0.016464 & 0 & 0 & 0 \\\hline
+		lf & lcv & 5 & 1 & 0.015827 & 0.044514 & 0 & 241 & 2662 \\\hline
+		lf & mcv & 5 & 2 & 0.015635 & 0.015829 & 0 & 0 & 0 \\\hline
+		mf & nop & 5 & 0 & 0.016175 & 0.948008 & 0 & 5544 & 5547 \\\hline
+		mf & lcv & 5 & 0 & 0.015786 & 0.11947 & 0 & 636 & 3906 \\\hline
+		mf & mcv & 5 & 1 & 0.015692 & 0.039804 & 0 & 166 & 1934 \\\hline
+		lrv & nop & 5 & 0 & 0.015834 & 0.809464 & 0 & 6669 & 7804 \\\hline
+		lrv & lcv & 5 & 1 & 0.015927 & 0.060101 & 0 & 505 & 4753 \\\hline
+		lrv & mcv & 5 & 1 & 0.015975 & 0.040183 & 0 & 279 & 3217 \\\hline
+		mrv & nop & 5 & 2 & 0.015534 & 0.015911 & 0 & 0 & 0 \\\hline
+		mrv & lcv & 5 & 2 & 0.015796 & 0.019275 & 0 & 0 & 0 \\\hline
+		mrv & mcv & 5 & 2 & 0.015581 & 0.015792 & 0 & 0 & 0 \\\hline
+	\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+\section{Conclusion}
+
+\section{Discussion}
+
+\bibliographystyle{plain}
+\bibliography{bib}
+
+\appendix
+\section{Implementation}
+
+\end{document}

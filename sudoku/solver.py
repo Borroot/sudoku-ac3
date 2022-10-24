@@ -34,6 +34,7 @@ def values(ac3, heuristic, x, y):
 
 
 def dfs(ac3, heuristic_field, heuristic_value, stats, timeout_event):
+    """Run a depth first search using the heuristics and AC-3."""
     if timeout_event is not None and timeout_event.is_set():
         return None
 
@@ -83,6 +84,7 @@ def dfs_timed(ac3, heuristic_field, heuristic_value, stats, timeout):
 
 
 def solve(sudoku, heuristic_field = h.nop, heuristic_value = h.nop, timeout=None):
+    """Solve the sudoku using AC-3 and possible a DFS with the given heuristics."""
     ac3 = Ac3(sudoku)
 
     stats = Stats(time.time(), heuristic_field, heuristic_value)
