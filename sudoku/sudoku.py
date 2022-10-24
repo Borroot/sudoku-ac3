@@ -36,7 +36,7 @@ class Sudoku:
             lines = list(map(str.strip, fp.readlines()))
             lines = list(filter(str.isdigit, lines))
 
-            if len(lines) == 0:
+            if not lines:
                 return []
 
             # convert the long format to the short format
@@ -48,10 +48,43 @@ class Sudoku:
         return []
 
 
-    def check_solution(self):
-        pass
+    def isvalid(self):
+        """Check whether the current sudoku (solution) is valid."""
+        # check horizontal
+        for y in range(9):
+            seen = [False] * 9
+            for x in range(9):
+                if seen[self.grid[y][x] - 1]:
+                    print("horizontal", x, y)
+                    return False
+                else:
+                    seen[self.grid[y][x] - 1] = True
+
+        # check vertical
+        for x in range(9):
+            seen = [False] * 9
+            for y in range(9):
+                if seen[self.grid[y][x] - 1]:
+                    print("vertical", x, y)
+                    return False
+                else:
+                    seen[self.grid[y][x] - 1] = True
+
+        # check blocks
+        for bx in range(0, 9, 3):
+            for by in range(0, 9, 3):
+                seen = [False] * 9
+                for x in range(3):
+                    for y in range(3):
+                        if seen[self.grid[by + y][bx + x] - 1]:
+                            print("block", bx + x, by + y)
+                            return False
+                        else:
+                            seen[self.grid[by + y][bx + x] - 1] = True
+
+        return True
 
 
 if __name__ == "__main__":
-    for sudoku in Sudoku.load("data/sudoku1.txt"):
+    for sudoku in Sudoku.load("data/sudoku.txt"):
         print(sudoku)

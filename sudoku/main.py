@@ -1,9 +1,0 @@
-from sudoku import load
-
-
-def main():
-    pass
-
-
-if __name__ == "__main__":
-    main()
