@@ -27,13 +27,13 @@ class Sudoku:
 
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename, maxnum = -1):
         """Load all the sudokus from a file with the long or short format."""
         if not os.path.exists(filename):
             return []
 
         with open(filename) as fp:
-            lines = list(map(str.strip, fp.readlines()))
+            lines = list(map(str.strip, fp.readlines()[:maxnum]))
             lines = list(filter(str.isdigit, lines))
 
             if not lines:

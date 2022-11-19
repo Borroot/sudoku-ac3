@@ -107,7 +107,7 @@ def solve(sudoku, heuristic_field = h.nop, heuristic_value = h.nop, timeout=None
 
 
 if __name__ == "__main__":
-    for index, sudoku in enumerate(Sudoku.load("data/sudoku.txt")):
+    for index, sudoku in enumerate(Sudoku.load("data/unbiased.txt", 10)):
         solution, stats = solve(sudoku, h.lrv, h.mcv, timeout = 10)
 
         print(sudoku)
