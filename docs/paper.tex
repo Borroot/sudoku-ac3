@@ -15,7 +15,7 @@
 \usepackage{listings}
 
 \author{Bram Pulles -- S1015194}
-\title{\textbf{Symbolic AI's for\\ Generalised Connect Four}}
+\title{\textbf{Solving Sudoku's with AC-3}}
 
 \begin{document}
 \maketitle
@@ -24,27 +24,304 @@
 
 \pagebreak
 \section{Introduction}
+Sudoku is a popular puzzle, it attracts attention from puzzle enthusiasts,
+mathematicians and computer scientists. Over the years computer scientists have
+worked on various ways of solving and generating Sudoku's. One technique to
+solve Sudoku's is based on the algorithm AC-3 (short for arc consistency),
+which is a technique more generally used in constraint satisfaction problems.
+In this paper we take a look at how AC-3 can be used to solve Sudoku's. We also
+implement the algorithm and benchmark the performance using a variety of
+heuristics.
 
-\section{Heuristics}
+To this end, we start by taking a look at the pseudocode of the algorithms for
+AC-3, the depth first search (DFS) which uses AC-3 and the heuristics used in
+the DFS. Next, we discuss the benchmark results comparing the performance of
+the different heuristics. Finally, we consider the conclusions which can be
+drawn from this work. In the appendix there are a few notes on the
+implementation itself.
 
-\section{Algorithm}
+\section{Algorithms}
+Sudoku's can be solved using a plain DFS algorithm. However, this might result
+in long solving times. AC-3 is an improvement on top of the DFS. Using AC-3 the
+number of possible values for every field in the Sudoku can be greatly
+decreased during search. This results in a way smaller search space for DFS and
+therefore greater performance.
 
-\section{Complexity}
+A heuristic can be applied to select the best field to consider at every
+iteration in DFS. Yet another heuristic can be utilised to provide an ordering
+on the possible values to be tried for this field. Depending on the heuristics
+chosen this can greatly affect the performance of the DFS.
+
+\subsection{AC-3}
+The AC-3 algorithm consists of three basic types. First, we have all the
+variables, which for Sudoku is one variable for every field in the Sudoku.
+Second, we got a domain of all the possible values for every variable, for
+Sudoku this is \texttt{[1, \dots, 9]} for all the empty fields and just
+\texttt{[n]} for every field containing a number \texttt{n}. Third, we have a
+set of relations which for every field provides all the other fields in
+relation to this field, i.e. in the same row, column or block.
+
+Using just these three pieces of information we can perform the AC-3 algorithm,
+see \ref{alg: ac3}. The AC-3 algorithm works over arcs, which are ordered
+tuples consisting of two fields which have a relation to one another. We start
+the algorithm with a worklist of arcs we want to consider. While we have arcs
+left in the worklist we try to reduce a domain, and if we reach an empty domain
+we known that we cannot create arc consistency. This information can be used to
+prune branches in the DFS! If we do not reach an empty domain but the AC-3
+algorithm terminates, we have reduced all the domains thus decreasing the size
+of the search space to be considered in the DFS.
+
+The contents of the worklist when we start the AC-3 algorithm can be of two
+different types. Before we start the DFS algorithm we use AC-3 consistency to
+reduce the domains of all the fields. In this situation we start with a
+worklist containing \textit{all} the possible arcs between any two fields.
+During the DFS we initialize the worklist based on the field which we are
+trying to fill with a value. The worklist then consists of all the arcs
+containing the field we are considering and any field which has a relation to
+this one.
+
+\begin{algorithm}
+	\caption{AC-3}
+	\label{alg: ac3}
+	\begin{algorithmic}[1]
+		\Require domains of all fields, relations between fields, worklist of arcs to be checked
+		\Ensure arc consistent domains for all fields
+		\Function{ac3}{domains, relations, worklist}
+			\While{worklist is not empty}
+				\State field one, field two := arc := pop worklist
+				\If{\Call{arc-reduce}{arc}}
+					\If{domain of field one is not empty}
+						\State worklist := worklist $\cup$ all arcs from field
+						one to any other \textit{relating} field
+					\Else
+						\State \textbf{return} false
+					\EndIf
+				\EndIf
+			\EndWhile
+			\State \textbf{return} true
+		\EndFunction
+		\Function{arc-reduce}{arc}
+			\If{domain size of field two $>$ 1}
+				\State \textbf{return} false
+			\EndIf
+			\State value := \textit{the} value in the domain of field two
+			\If{value in domain of field one}
+				\State domain field one := domain of field one $\setminus$ value
+				\State \textbf{return} true
+			\EndIf
+			\State \textbf{return} false
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{DFS}
+The DFS algorithm is very basic, see \ref{alg: dfs}. We have all the normal
+ingredients and no specialties. We have the terminating condition, which checks
+if we have found a solution by looking at the domains. And, we have the
+recursive part which loops over all the values for a certain field and tries
+them recursively if the arcs are consistent. We also include a timeout which is
+essential for automated benchmarking. Note that before we run the DFS we run
+the AC-3 algorithm and it is possible that we already find a solution in which
+case DFS is not even needed.
+
+\begin{algorithm}
+	\caption{DFS with AC-3}
+	\label{alg: dfs}
+	\begin{algorithmic}[1]
+		\Require domains of all fields, relations between fields, heuristic 1
+		for choosing a field, heuristic~2 for choosing a value, timeout event
+		signaler
+		\Ensure solved sudoku
+		\Function{DFS}{domains, relations, heuristic 1, heuristic 2, timeout}
+			\If{timeout}
+				\State \textbf{return} null
+			\EndIf
+			\If{all domains have size 1}
+				\State \textbf{return} solution
+			\EndIf
+			\State field := best empty field using heuristic 1
+			\State values := best ordering of values from domain using
+			heuristic 2
+			\For{value in values}
+				\If{arc consistent when setting value}
+					\State solution := \Call{DFS}{domains, relations, heuristic
+					1, heuristic 2, timeout}
+					\If{solution is not null}
+						\State \textbf{return} solution
+					\EndIf
+				\EndIf
+			\EndFor
+			\State \textbf{return} null
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\subsection{Heuristics}
+The heuristics are used for two different purposes, choosing the next field to
+consider and choosing the next value of this field to consider, we call these
+field and value heuristics respectively. We have implemented 5 different field
+heuristics and 3 different value heuristics.
+\\
+
+\noindent
+The field heuristics are as follows:
+\begin{itemize}
+	\item NOP (No OPeration): This heuristic always returns the same value and
+		is useful as a control group in the experiments. Note, in practise
+		we get a lexicographical ordering.
+	\item LF (Least Finalized): Fields with few related finalized fields, i.e.
+		fields with a domain size of one, are scored better.
+	\item MF (Most Finalized): Fields with many related finalized fields, i.e.
+		fields with a domain size of one, are scored better.
+	\item LRV (Least Remaining Values): Fields with a small domain are scored
+		better.
+	\item MRV (Most Remaining Values): Fields with a big domain are scored
+		better.
+\end{itemize}
+
+\noindent
+The value heuristics are as follows:
+\begin{itemize}
+	\item NOP (No OPeration): This heuristic always returns the same value and
+		is useful as a control group in the experiments. Note, in practise we
+		get a lexicographical ordering.
+	\item LCV (Least Constraining Values): Values putting few constraints on
+		other domains are scored better.
+	\item MCV (Most Constraining Values): Values putting many constraints on
+		other domains are scored better.
+\end{itemize}
+
+\noindent
+The complexities of the heuristics are easily determined as all of them are a
+single line of code.
+\begin{itemize}
+	\item NOP: $\mathcal{O}(1)$ trivially.
+	\item LF and MF: $\mathcal{O}(1)$ since we count the number of related
+		fields with a domain size of 1. More specifically, we need to check $8
+		\cdot 3 = 24$ domains.
+	\item LRV and MRV: $\mathcal{O}(1)$ trivially.
+	\item LCV and MCV: $\mathcal{O}(1)$ since we check for every related field
+		if the value considered is in their domain. More specifically, this
+		takes at most $24 \cdot 9 = 216$ value check operations.
+\end{itemize}
 
 \section{Benchmarks}
+Before we can actually start benchmarking the code we need a considerate amount
+of Sudoku puzzles to get statistically significant results. We have tried
+various different databases of puzzles, but we found that in most datasets the
+puzzles were either too hard or too easy. Finally, we found a good dataset which
+is sampled with a uniform probability conditional on the number of clues. This
+dataset is created in such a way as to be representative of Sudoku's in general
+and therefore a great set to benchmark on.\footnote{The dataset is from
+\texttt{tdoku}, see
+\url{https://github.com/t-dillon/tdoku/blob/master/benchmarks/README.md}.}
+
+\subsection{Results}
+The results of the benchmarks can be seen in table \ref{tab: benchmarks}.
+
+% 1/15 benchmark with hf = nop and hv = nop... done in 16.30 minutes
+% 2/15 benchmark with hf = nop and hv = lcv... done in 13.60 minutes
+% 3/15 benchmark with hf = nop and hv = mcv... done in 13.41 minutes
+% 4/15 benchmark with hf = lf  and hv = nop... done in 33.20 minutes
+% 5/15 benchmark with hf = lf  and hv = lcv... done in 32.94 minutes
+% 6/15 benchmark with hf = lf  and hv = mcv... done in 33.21 minutes
+% 7/15 benchmark with hf = mf  and hv = nop... done in 4.48 minutes
+% 8/15 benchmark with hf = mf  and hv = lcv... done in 5.04 minutes
+% 9/15 benchmark with hf = mf  and hv = mcv... done in 4.84 minutes
+%10/15 benchmark with hf = lrv and hv = nop... done in 16.06 minutes
+%11/15 benchmark with hf = lrv and hv = lcv... done in 16.53 minutes
+%12/15 benchmark with hf = lrv and hv = mcv... done in 15.31 minutes
+%13/15 benchmark with hf = mrv and hv = nop... done in 33.28 minutes
+%14/15 benchmark with hf = mrv and hv = lcv... done in 33.06 minutes
+%15/15 benchmark with hf = mrv and hv = mcv... done in 33.30 minutes
+
 \begin{table}[h]
 	\begin{adjustbox}{center}
+		\begin{tabular}{|c|c|c|c|c|c|c|c|c|}\hline
+		\textbf{field} & \textbf{value} & \textbf{total} & \textbf{timeouts} & \textbf{mean time} & \textbf{mean count} & \textbf{max count} \\\hline
+		nop & nop & 200 & 51  & 2.1821 & 8873  & 53970 \\\hline
+		nop & lcv & 200 & 38  & 1.6438 & 5435  & 45879 \\\hline
+		nop & mcv & 200 & 41  & 1.4703 & 5322  & 51701 \\\hline
+		lf  & nop & 200 & 198 & 4.0879 & 27367 & 27367 \\\hline
+		lf  & lcv & 200 & 196 & 2.2875 & 16815 & 37611 \\\hline
+		lf  & mcv & 200 & 198 & 4.654  & 30614 & 30614 \\\hline
+		mf  & nop & 200 & 3   & 0.6186 & 1463  & 19936 \\\hline
+		mf  & lcv & 200 & 4   & 0.6745 & 1591  & 23407 \\\hline
+		mf  & mcv & 200 & 4   & 0.6864 & 1568  & 20541 \\\hline
+		lrv & nop & 200 & 60  & 1.6605 & 6542  & 47999 \\\hline
+		lrv & lcv & 200 & 58  & 1.6626 & 8350  & 61334 \\\hline
+		lrv & mcv & 200 & 61  & 1.2935 & 4876  & 51165 \\\hline
+		mrv & nop & 200 & 198 & 9.1331 & 72412 & 72412 \\\hline
+		mrv & lcv & 200 & 197 & 0.0746 & 390   & 44874 \\\hline
+		mrv & mcv & 200 & 199 & 0.1839 & 1485  & 1485  \\\hline
+		\end{tabular}
 	\end{adjustbox}
+	\caption{
+		Benchmark results on Sudoku's from the unbiased dataset. The
+		\texttt{field} column describes the field heuristic used. The
+		\texttt{value} column describes the value heuristic used. The
+		\texttt{total} column describes the total number of Sudoku's evaluated,
+		in this case 200. The \texttt{timeouts} column describes the total
+		number of timeouts that occurred during DFS, with a timeout set to 10
+		seconds. The \texttt{mean time} column describes the mean of all the
+		benchmark times (without timeouts) in seconds. The \texttt{mean count}
+		describes mean number of nodes evaluated during all DFS. The
+		\texttt{max count} describes the maximum number of nodes evaluated
+		during all DFS.
+	}
+	\label{tab: benchmarks}
 \end{table}
 
+\subsection{Discussion}
+There are a lot of things that can be seen from the benchmark results. Let us
+first take a look at the field heuristic. First we see that some setups, namely
+all with the LF or MRV heuristic nearly always reached a timeout. We can also
+see that the MF heuristic reached almost no timeouts. The LRV and NOP field
+heuristics performed considerably worse than the MF heuristic. It is
+interesting to see that the field heuristic, opposed to the value heuristic,
+mostly determines the performance of the algorithm.
+
+Looking at the value heuristic there seem to be contradicting results. When
+using a NOP field heuristic the LCV value heuristic seems to perform
+significantly better than the NOP value heuristic. However, when we using a MF
+field heuristic the LCV value heuristic seems to perform slightly worse than
+the NOP value heuristic. This is surprising as the NOP heuristic provides
+effectively no ordering. This might be explained by the number of operations
+performed when calculating LCV which can be more than 200 operations. This
+seems insignificant, but it can explain the minor degradation in performance
+when compared to the NOP heuristic. Also, the MF field heuristic results in an
+optimally small domain and thus a small number of values need to be ordered, so
+the ordering would likely have less of an impact. This hypothesis is further
+supported since the LCV and MCV heuristics perform basically equivalently under
+MF.
+
 \section{Conclusion}
-
-\section{Discussion}
-
-\bibliographystyle{plain}
-\bibliography{bib}
+When solving Sudoku's with DFS and AC-3, the best performing field heuristic is
+MF, compared to NOP, LF, LRV and MRV. The field heuristic largely determines
+the performance of the algorithm. The best value heuristic under MF is NOP,
+compared to LCV and MCV. However, in general, the value heuristic does not have
+much influence on the algorithms performance.
 
 \appendix
 \section{Implementation}
+The implementation is done in Python. Two input formats are supported. The
+block format from the assignment can be read, this is extended so that multiple
+of these blocks can be put in one single file, see \texttt{data/sudoku.txt}.
+The line format which is common on the internet is also supported, see e.g.
+\texttt{data/unbiased.txt}.
+
+The AC-3 graph is implemented as a class in which all the relations are once
+created at initialisation. Whenever arc consistency is tested all the updates
+done to domains, i.e. removing values from field domains, are saved in a
+history. If no arc consistency can be reached or the DFS fails the history is
+used to reset the AC-3 domains.
+
+Some files contain a main which was used for testing, see \texttt{ac3.py},
+\texttt{solver.py} and \texttt{sudoku.py}. Benchmarks are run with
+\texttt{benchmark.py} utilising 15 out of 16 cores in my CPU to drastically
+decrease the benchmark time from 8.3 hours to a mere 30 minutes.
+
+Correctness of the results has been checked with \texttt{isvalid}, see
+\texttt{sudoku.py}.
 
 \end{document}

@@ -48,7 +48,6 @@ class Ac3:
             if len(self.domain[y2][x2]) > 1:
                 return False # we can always find a vx and vy satisfying the constraint
 
-            # print(f"({x2},{y2}) ->", self.domain[y2][x2])
             value = self.domain[y2][x2][0]
             try:
                 index = self.domain[y1][x1].index(value)

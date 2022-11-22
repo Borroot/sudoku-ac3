@@ -27,7 +27,7 @@ def process_benchmark(sudokus, hf, hv, timeout, q, index, total_count):
 
 
 def benchmark(sudokus, heuristic_field, heuristic_value, timeout, process_index):
-    """Benchmark the given set of sudokus using the provides heuristics."""
+    """Benchmark the given set of sudokus using the provided heuristics."""
     timeouts = 0
     nodecounts = []
     times = []
@@ -88,6 +88,7 @@ if __name__ == "__main__":
     index = 0
     for hf in heuristic_field:
         for hv in heuristic_value:
+            # start a new process to run benchmarks concurrently
             processes.append(
                 mp.Process(
                     target = process_benchmark,

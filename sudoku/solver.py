@@ -43,17 +43,14 @@ def dfs(ac3, heuristic_field, heuristic_value, stats, timeout_event):
     if (solution := ac3.solution()) is not None:
         return solution
 
-    next_field = field(ac3, heuristic_field)
-    if next_field is None:
-        return None
+    x, y = field(ac3, heuristic_field)
 
-    x, y = next_field
     for value in values(ac3, heuristic_value, x, y):
         if ac3.check_set(x, y, value):
             solution = dfs(ac3, heuristic_field, heuristic_value, stats, timeout_event)
             if solution is not None:
                 return solution
-        ac3.uncheck()
+        ac3.uncheck() # reset ac3 domains
 
     return None
 
@@ -107,8 +104,8 @@ def solve(sudoku, heuristic_field = h.nop, heuristic_value = h.nop, timeout=None
 
 
 if __name__ == "__main__":
-    for index, sudoku in enumerate(Sudoku.load("data/unbiased.txt", 10)):
-        solution, stats = solve(sudoku, h.lrv, h.mcv, timeout = 10)
+    for index, sudoku in enumerate(Sudoku.load("data/unbiased.txt", 50)):
+        solution, stats = solve(sudoku, h.mf, h.nop, timeout = 5)
 
         print(sudoku)
         if solution is not None: print(solution)
